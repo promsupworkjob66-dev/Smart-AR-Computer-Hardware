@@ -273,7 +273,7 @@
 
 <header class="hero">
     <h1>Smart ComClass</h1>
-    <h2 style="color: var(--neon-blue); font-weight: 500; margin-top: 10px;">ส่องโลกฮาร์ดแวร์อัจฉริยะกับครูนุช</h2>
+    <h2 style="color: var(--neon-blue); font-weight: 500; margin-top: 10px;">ส่องโลกฮาร์ดแวร์อัจฉริยะ</h2>
     <p style="max-width: 750px; margin: 25px auto; line-height: 1.8; opacity: 0.9; color: #ccd6f6;">
         เรียนรู้ผ่านเทคโนโลยี AR สำรวจอุปกรณ์คอมพิวเตอร์แบบ 360 องศา
     </p>
@@ -376,16 +376,7 @@
 </div>
 </footer>
 
-<div id="adminModal">
-    <div class="modal-content">
-        <h3>🔑 สำหรับคุณครู</h3>
-        <input type="password" id="adminPassInput" placeholder="ใส่รหัสผ่าน">
-        <div class="modal-btns">
-            <button class="btn-confirm" onclick="checkAdminPassword()">เข้าสู่ระบบ</button>
-            <button class="btn-cancel" onclick="closeAdminModal()">ยกเลิก</button>
-        </div>
-    </div>
-</div>
+
 
 <script>
     const clickSound = document.getElementById("clickSound");
@@ -396,34 +387,7 @@
         hoverSound.play().catch(() => {});
     }
 
-    // --- ระบบรหัสผ่านหน้า Admin ---
-    function openAdminModal() {
-        document.getElementById("adminModal").style.display = "flex";
-        document.getElementById("adminPassInput").value = "";
-        document.getElementById("adminPassInput").focus();
-    }
-
-    function closeAdminModal() {
-        document.getElementById("adminModal").style.display = "none";
-    }
-
-    function checkAdminPassword() {
-        const pass = document.getElementById("adminPassInput").value;
-        if (pass === "comclass1234") {
-            window.location.href = "admin.html";
-        } else {
-            alert("รหัสผ่านไม่ถูกต้องครับคุณครู!");
-            document.getElementById("adminPassInput").value = "";
-        }
-    }
-
-    // รองรับการกด Enter ในช่องรหัสผ่าน
-    document.getElementById("adminPassInput").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-            checkAdminPassword();
-        }
-    });
-
+   
     // ปิด Modal เมื่อคลิกข้างนอกกล่อง
     window.onclick = function(event) {
         const modal = document.getElementById("adminModal");
@@ -482,6 +446,7 @@ function saveScore(name, score) {
 
 </body>
 </html>
+
 
 
 
