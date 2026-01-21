@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR View - SSD</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+        }
+        body {
+            margin: 0;
+            background-color: #050a14;
+            font-family: 'Prompt', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        model-viewer {
+            width: 100%;
+            flex-grow: 1;
+            background-color: transparent;
+        }
+
+        /* --- ปุ่มส่อง AR --- */
+        .ar-button {
+            background-color: var(--neon-blue);
+            border-radius: 50px;
+            border: none;
+            padding: 12px 24px;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #050a14;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+            z-index: 10;
+        }
+
+        /* --- ปุ่มย้อนกลับ --- */
+        .back-btn {
+            position: absolute;
+            top: 25px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 20;
+        }
+
+        /* --- ✅ ปุ่มฟังเสียงบรรยาย --- */
+        .audio-control {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            z-index: 20;
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid var(--neon-blue);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .audio-control:hover {
+            background: var(--neon-blue);
+            color: #050a14;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .audio-control.playing {
+            background: #ff00cc;
+            border-color: #ff00cc;
+            color: white;
+        }
+
+        .info-panel {
+            padding: 25px;
+            background: rgba(7, 15, 30, 0.9);
+            border-top: 2px solid var(--neon-blue);
+        }
+
+        /* --- ส่วนสำหรับหน้าจอทุกประเภท (พื้นฐาน) --- */
+.ar-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    padding-top: 20px;
+}
+
+/* แถวของปุ่มควบคุม */
+.ar-buttons-row {
+    display: flex;
+    justify-content: space-between;
+    width: 95%;
+    max-width: 1200px; /* จำกัดความกว้างบน PC */
+    position: absolute; /* ให้ปุ่มลอยอยู่ด้านบนสุด */
+    top: 20px;
+    z-index: 10;
+}
+
+/* ส่วนข้อความหัวข้อ */
+.ar-title-section {
+    text-align: center;
+    margin-top: 20px; /* ระยะเริ่มต้นบน PC */
+    transition: all 0.3s ease;
+}
+
+/* --- สำหรับมือถือเท่านั้น (หน้าจอเล็กกว่า 768px) --- */
+@media (max-width: 768px) {
+    .ar-header-container {
+        padding-top: 80px; /* เว้นที่ว่างด้านบนไว้ให้ปุ่ม */
+    }
+
+    .ar-buttons-row {
+        width: 90%;
+        top: 15px; /* จัดตำแหน่งปุ่มให้สูงขึ้น */
+    }
+
+    .ar-title-section {
+        margin-top: 40px; /* ดันข้อความ Computer Case ลงมาเพิ่มเพื่อไม่ให้ปุ่มทับ */
+    }
+
+    .ar-title-section h1 {
+        font-size: 1.5rem; /* ลดขนาดตัวอักษรบนมือถือไม่ให้กินพื้นที่ */
+    }
+}
+
+/* --- สำหรับ PC เท่านั้น (หน้าจอใหญ่) --- */
+@media (min-width: 769px) {
+    .ar-title-section {
+        margin-top: 10px; /* บน PC ให้ขยับขึ้นไปใกล้ปุ่มมากขึ้นเพื่อลดช่องว่างที่กว้างเกินไป */
+    }
+}
+
+        
+    </style>
+</head>
+<body>
+
+    <audio id="ssdAudio" src="SSD.mp3"></audio>
+
+    <div class="ar-header-container">
+    <div class="ar-buttons-row" style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+   <a href="index.html" class="back-btn">← ย้อนกลับ</a>
+    <button class="audio-control" id="audioBtn">
+        <span id="audioIcon">🔈</span> 
+        <span id="audioText">ฟังเสียงบรรยาย</span>
+    </button>
+</div>
+
+    <div class="ar-title-section">
+        <h1 style="color: var(--neon-blue); margin: 0 0 10px 0;">SSD - Solid State Drive</h1>
+        <p>Model View</p>
+    </div>
+</div>
+  
+
+    <model-viewer 
+        src="ssd.glb" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        auto-rotate 
+        shadow-intensity="1">
+        
+        <button slot="ar-button" class="ar-button">
+            ✨ ส่องดูโมเดลในโลกจริง (AR)
+        </button>
+    </model-viewer>
+
+    <div class="info-panel">
+        <h3 style="color: var(--neon-blue); margin: 0 0 10px 0;">เกร็ดความรู้เรื่อง SSD</h3>
+        <p style="margin: 0; line-height: 1.6;">SSD (Solid state drive) คืออุปกรณ์จัดเก็บข้อมูลที่ใช้ชิปหน่วยความจำในการบันทึกข้อมูลแทนจานหมุนแบบเก่า ทำให้มีความเร็วในการอ่าน-เขียนสูงมาก ทนต่อแรงกระแทก และช่วยให้คอมพิวเตอร์เปิดเครื่องหรือเปิดโปรแกรมได้รวดเร็วทันใจ</p>
+    </div>
+
+    <script>
+        const audio = document.getElementById('ssdAudio');
+        const audioBtn = document.getElementById('audioBtn');
+        const audioIcon = document.getElementById('audioIcon');
+        const audioText = document.getElementById('audioText');
+
+        audioBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                audioBtn.classList.add('playing');
+                audioIcon.innerText = '🔊';
+                audioText.innerText = 'กำลังเล่น...';
+            } else {
+                audio.pause();
+                audioBtn.classList.remove('playing');
+                audioIcon.innerText = '🔈';
+                audioText.innerText = 'ฟังเสียงบรรยาย';
+            }
+        });
+
+        // เมื่อเล่นจบให้รีเซ็ตปุ่ม
+        audio.onended = () => {
+            audioBtn.classList.remove('playing');
+            audioIcon.innerText = '🔈';
+            audioText.innerText = 'ฟังเสียงบรรยาย';
+        };
+    </script>
+
+</body>
+</html>

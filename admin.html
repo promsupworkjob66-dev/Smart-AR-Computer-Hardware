@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 10 Leaderboard Admin - SmartCom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32;
+            --neon-blue: #00f2ff; --bg-dark: #0f172a;
+        }
+
+        body { font-family: 'Prompt', sans-serif; background: var(--bg-dark); color: white; padding: 10px; margin: 0; min-height: 100vh; }
+
+        /* ระบบล็อค (Firebase Auth Overlay) */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(15px);
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 25px;
+            border: 1px solid var(--neon-blue); width: 90%; max-width: 400px; text-align: center;
+        }
+        .auth-card input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
+            border: 1px solid #334155; background: rgba(0,0,0,0.3); color: white; text-align: center; box-sizing: border-box;
+        }
+        
+        .admin-card { background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 20px; border: 1px solid rgba(0, 242, 255, 0.2); max-width: 800px; margin: 20px auto; display: none; /* ซ่อนไว้จนกว่าจะล็อคอิน */ }
+
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--neon-blue); padding-bottom: 15px; }
+        h2 { margin: 0; font-size: 1.6rem; color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+
+        .btn-action { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-family: 'Prompt'; font-weight: 600; transition: 0.3s; }
+        .btn-login { background: #6366f1; color: white; width: 100%; margin-top: 10px; }
+        .btn-logout { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; font-size: 0.8rem; padding: 5px 10px; cursor: pointer; border-radius: 5px; }
+        
+        /* สไตล์ตารางคงเดิมตามโค้ดคุณครู */
+        .top-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 12px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(0, 242, 255, 0.2); color: var(--neon-blue); padding: 15px; text-align: center; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .score-badge { background: var(--neon-blue); color: #000; padding: 4px 12px; border-radius: 20px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2><i class="fa-solid fa-shield-halved"></i> Teacher Login</h2>
+            <p style="font-size: 0.8rem; color: #ccc;">เข้าใช้งานด้วยอีเมลผู้ดูแลระบบ Firebase</p>
+            <input type="email" id="email" placeholder="อีเมลครู (Email)">
+            <input type="password" id="pass" placeholder="รหัสผ่าน (Password)">
+            <button class="btn-action btn-login" onclick="login()">เข้าสู่ระบบ</button>
+            <a href="index.html" style="color: #666; font-size: 0.8rem; text-decoration: none; display: block; margin-top: 15px;">กลับหน้าหลักนักเรียน</a>
+        </div>
+    </div>
+
+    <div class="admin-card" id="main-content">
+        <div class="header-flex">
+            <div>
+                <h2>🏆 ADMIN LEADERBOARD</h2>
+                <small id="user-email" style="color: #6366f1;"></small>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+            </div>
+        </div>
+
+        <div class="top-stats">
+            <div class="stat-box"><small>ผู้เข้าสอบทั้งหมด</small><div id="student-count" style="font-size: 1.5rem; font-weight: bold; color: var(--neon-blue);">0</div></div>
+            <div class="stat-box"><small>คะแนนเฉลี่ย</small><div id="avg-score" style="font-size: 1.5rem; font-weight: bold; color: #ff00cc;">0.0</div></div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="btn-action" style="background: #334155; color: white;" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์ PDF</button>
+            <button class="btn-action" style="background: #107c10; color: white;" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+            <button class="btn-action" style="background: #ff4d4d; color: white; margin-left: auto;" onclick="resetScores()">ล้างข้อมูล</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="scoreTable">
+                <thead>
+                    <tr><th>อันดับ</th><th>ชื่อ</th><th>คะแนน</th><th>เวลา</th></tr>
+                </thead>
+                <tbody id="admin-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK5UMFATyhnQlq3EDLmG7agFqTKh0BYCM",
+            authDomain: "smartcom-ar-quiz.firebaseapp.com",
+            projectId: "smartcom-ar-quiz",
+            databaseURL: "https://smartcom-ar-quiz-default-rtdb.firebaseio.com/",
+            storageBucket: "smartcom-ar-quiz.appspot.com",
+            messagingSenderId: "367243958931", 
+            appId: "1:367243958931:web:3e3c66f54668b8ec66b8ec" 
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // 1. ตรวจสอบสถานะการล็อคอิน
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // ถ้าล็อคอินแล้ว
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('user-email').innerText = `ล็อกอินโดย: ${user.email}`;
+                loadScores();
+            } else {
+                // ถ้ายังไม่ล็อคอิน หรือ Logout แล้ว
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'none';
+            }
+        });
+
+        // 2. ฟังก์ชัน Login
+        function login() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            auth.signInWithEmailAndPassword(email, pass)
+                .catch((error) => alert("ข้อผิดพลาด: " + error.message));
+        }
+
+        // 3. ฟังก์ชัน Logout
+        function logout() {
+            auth.signOut();
+        }
+
+        // 4. โหลดข้อมูลจาก Database (เหมือนโค้ดเดิมของคุณครู)
+        function loadScores() {
+            database.ref('scores/').on('value', (snapshot) => {
+                let allData = [];
+                snapshot.forEach((child) => { allData.push(child.val()); });
+                allData.sort((a, b) => b.score - a.score || a.time - b.time);
+                
+                document.getElementById('student-count').innerText = allData.length;
+                document.getElementById('avg-score').innerText = allData.length > 0 
+                    ? (allData.reduce((acc, curr) => acc + curr.score, 0) / allData.length).toFixed(1) : 0;
+
+                const tbody = document.getElementById('admin-table-body');
+                tbody.innerHTML = "";
+                allData.slice(0, 10).forEach((item, index) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td style="text-align:left">${item.name}</td>
+                            <td><span class="score-badge">${item.score}</span></td>
+                            <td>${item.time}s</td>
+                        </tr>`;
+                });
+            });
+        }
+
+        function resetScores() {
+            if(confirm("🚨 รีเซ็ต Leaderboard ทั้งหมดใช่หรือไม่?")) {
+                database.ref('scores/').remove();
+            }
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.table_to_sheet(document.getElementById("scoreTable"));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Scores");
+            XLSX.writeFile(wb, "Leaderboard.xlsx");
+        }
+    </script>
+</body>
+</html>

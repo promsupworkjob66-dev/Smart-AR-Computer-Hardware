@@ -1,0 +1,37 @@
+/* --- สไตล์ปุ่ม Quiz เดิมของคุณครู --- */
+.quiz-main-btn {
+    display: inline-block;
+    padding: 20px 50px;
+    background: linear-gradient(45deg, #ff00cc, #3333ff);
+    color: white;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: 0.4s;
+    box-shadow: 0 0 20px rgba(255, 0, 204, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    text-align: center; /* เพิ่มเพื่อให้ข้อความอยู่กลางปุ่มเสมอ */
+}
+
+.quiz-main-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(255, 0, 204, 0.7);
+    letter-spacing: 2px;
+}
+
+/* --- ✅ เพิ่ม @media สำหรับมือถือ --- */
+@media (max-width: 600px) {
+    .quiz-main-btn {
+        padding: 15px 35px;    /* ลดขนาด Padding ลง */
+        font-size: 1.1rem;     /* ลดขนาดตัวอักษรให้พอดีกับหน้าจอ */
+        width: 80%;            /* ให้ปุ่มกว้างตามหน้าจอแต่ไม่ติดขอบ */
+        max-width: 300px;      /* จำกัดความกว้างสูงสุด */
+        box-shadow: 0 0 15px rgba(255, 0, 204, 0.5); /* ปรับเงาให้พอดี */
+    }
+    
+    .quiz-main-btn:hover {
+        transform: scale(1.02); /* ลดความแรงของการขยายบนมือถือป้องกันการล้น */
+        letter-spacing: 1px;    /* ลดระยะห่างตัวอักษรลงเล็กน้อยบนมือถือ */
+    }
+}

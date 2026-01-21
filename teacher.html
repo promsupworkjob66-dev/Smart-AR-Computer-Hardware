@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>โหมดครู | Smart Computer Hardware AR</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<header class="hero">
+  <h1>👨‍🏫 โหมดครู</h1>
+  <p>จัดการคะแนนและการแข่งขัน</p>
+</header>
+
+<section class="lesson">
+  <h2>🔐 เข้าสู่ระบบครู</h2>
+  <input type="password" id="pass" placeholder="ใส่รหัสครู">
+  <button class="btn" onclick="login()">เข้าสู่ระบบ</button>
+
+  <div id="panel" style="display:none;margin-top:30px;">
+    <h2>📊 จัดการระบบ</h2>
+    <p>คะแนนรวมปัจจุบัน: <b id="score">0</b></p>
+
+    <button class="btn" onclick="resetScore()">รีเซ็ตคะแนนทั้งเครื่อง</button><br><br>
+    <button class="btn" onclick="resetBoard()">ล้าง Leaderboard</button>
+  </div>
+</section>
+
+<a href="index.html" class="back">← กลับหน้าเมนู</a>
+
+<script src="js/score.js"></script>
+
+<script>
+const TEACHER_PASS = "1234"; // 🔴 เปลี่ยนรหัสตรงนี้
+
+function login(){
+  if(document.getElementById("pass").value === TEACHER_PASS){
+    document.getElementById("panel").style.display="block";
+    document.getElementById("score").innerText = getScore();
+  }else{
+    alert("รหัสไม่ถูกต้อง");
+  }
+}
+
+function resetScore(){
+  if(confirm("รีเซ็ตคะแนนทั้งหมด?")){
+    localStorage.clear();
+    alert("รีเซ็ตเรียบร้อย");
+    location.reload();
+  }
+}
+
+function resetBoard(){
+  if(confirm("ล้าง Leaderboard?")){
+    localStorage.removeItem("leaderboard");
+    alert("ล้าง Leaderboard เรียบร้อย");
+  }
+}
+</script>
+</body>
+</html>
